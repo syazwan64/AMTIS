@@ -25,29 +25,40 @@
         </form>
 
         <?php
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $voltage = floatval($_POST['voltage']);
-            $current = floatval($_POST['current']);
-            $currentRate = floatval($_POST['currentRate']);
-
-            $tableRows = '';
-            $hourTotal = 0;
-            $dailyTotal = 0;
+        function calculateElectricityRates($voltage, $current, $currentRate)    // Defining function to calculate electricity rates based on user inputs
+        {
+            $tableRows = '';                                                    // Initialization of $tableRows to be inserted into the HTML
+            $hourlyTotals = [];                                                 // Initialization of array of rates calculated 
 
             for ($hour = 1; $hour <= 24; $hour++) {
                 $power = $voltage * $current;
                 $energy = $power * $hour / 1000;
 
-                $hourTotal = ($energy) * ($currentRate / 100);
-                $dailyTotal = $hourTotal;
+                $hourlyTotal = ($energy) * ($currentRate / 100);
+                $hourlyTotals[$hour] = $hourlyTotal;
 
                 $tableRows .= "<tr>
                     <td>{$hour}</td>
                     <td>{$hour}</td>
                     <td>{$energy}</td>
-                    <td>" . number_format($hourTotal, 2) . "</td>
+                    <td>" . number_format($hourlyTotal, 2) . "</td>
                 </tr>";
             }
+
+            $dailyTotal = $hourlyTotals[24];                                    // Defining the total electricity rates of the day
+
+            return [
+                'tableRows' => $tableRows,
+                'dailyTotal' => $dailyTotal,
+            ];
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {                            // Obtaining all the user inputs using POST method
+            $voltage = floatval($_POST['voltage']);
+            $current = floatval($_POST['current']);
+            $currentRate = floatval($_POST['currentRate']);
+
+            $results = calculateElectricityRates($voltage, $current, $currentRate);
             ?>
 
             <h2>Results:</h2>
@@ -62,11 +73,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?= $tableRows ?>
+                    <?= $results['tableRows'] ?>
                 </tbody>
             </table>
 
-            <p><strong>Daily Total Price:</strong> RM <?= number_format($dailyTotal, 2) ?></p>
+            <p><strong>Daily Total Price:</strong> RM <?= number_format($results['dailyTotal'], 2) ?></p>
         <?php } ?>
 
     </div>
